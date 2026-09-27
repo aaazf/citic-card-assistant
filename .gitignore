@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Local data and secrets
+backend/data/*
+!backend/data/.gitkeep
+!backend/data/documents/.gitkeep
+!backend/data/chroma/.gitkeep
+.env
+*.env.local
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Public tunnel binary (large, re-download as needed)
+tools/cloudflared.exe
+ms_deploy.json

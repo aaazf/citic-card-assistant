@@ -1,0 +1,1 @@
+"""Personal knowledge assistant backend."""

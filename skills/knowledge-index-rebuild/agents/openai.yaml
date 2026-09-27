@@ -1,0 +1,3 @@
+interface:
+  display_name: "知识库索引重建"
+  short_description: "安全重建、校验、切换和回滚版本化 RAG 索引"
