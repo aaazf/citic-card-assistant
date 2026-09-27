@@ -1,0 +1,4 @@
+# Batch files with Chinese text must stay CRLF + GBK (code page 936).
+# Saving them as UTF-8 (with or without BOM) breaks cmd.exe line parsing.
+*.cmd text eol=crlf
+*.bat text eol=crlf
