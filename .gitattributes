@@ -2,3 +2,5 @@
 # Saving them as UTF-8 (with or without BOM) breaks cmd.exe line parsing.
 *.cmd text eol=crlf
 *.bat text eol=crlf
+
+Dockerfile text eol=lf
