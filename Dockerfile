@@ -3,7 +3,7 @@ FROM node:20-slim AS frontend
 WORKDIR /app/frontend
 RUN npm config set registry https://registry.npmmirror.com \
     && npm i -g pnpm@10
-COPY frontend/package.json frontend/pnpm-lock.yaml ./
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
 RUN pnpm build
