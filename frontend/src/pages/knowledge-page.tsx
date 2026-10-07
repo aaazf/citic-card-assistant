@@ -144,13 +144,12 @@ export function KnowledgePage() {
     },
   });
 
-  const uploadMutation = useMutation({
-    mutationFn: ({ knowledgeBaseId, file }: { knowledgeBaseId: string; file: File }) =>
-      uploadDocument(knowledgeBaseId, file),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["documents"] });
-    },
-  });
+  const [uploadProgress, setUploadProgress] = useState<{
+    done: number;
+    total: number;
+    name: string;
+  } | null>(null);
+  const [uploadErrors, setUploadErrors] = useState<string[]>([]);
 
   const deleteDocumentMutation = useMutation({
     mutationFn: deleteDocument,
@@ -169,16 +168,30 @@ export function KnowledgePage() {
     if (name.trim()) createMutation.mutate();
   }
 
-  function uploadFile(file: File) {
-    if (!selectedKnowledgeBaseId) return;
-    uploadMutation.mutate({ knowledgeBaseId: selectedKnowledgeBaseId, file });
+  async function uploadFiles(files: File[]) {
+    if (!selectedKnowledgeBaseId || files.length === 0 || uploadProgress) return;
+    const knowledgeBaseId = selectedKnowledgeBaseId;
+    setUploadErrors([]);
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index];
+      setUploadProgress({ done: index, total: files.length, name: file.name });
+      try {
+        await uploadDocument(knowledgeBaseId, file);
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "上传失败";
+        setUploadErrors((previous) => [...previous, `${file.name}：${reason}`]);
+      }
+      await queryClient.invalidateQueries({ queryKey: ["documents"] });
+    }
+    setUploadProgress(null);
+    await queryClient.invalidateQueries({ queryKey: ["knowledge-bases"] });
   }
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setDragging(false);
-    const file = event.dataTransfer.files[0];
-    if (file) uploadFile(file);
+    const files = Array.from(event.dataTransfer.files);
+    if (files.length > 0) void uploadFiles(files);
   }
 
   return (
@@ -345,34 +358,49 @@ export function KnowledgePage() {
                   <div>
                     <p className="text-sm font-medium">添加资料</p>
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      将 PDF、Word、EPUB、Markdown、图片等资料拖到这里，或点击右侧按钮
+                      将 PDF、Word、EPUB、Markdown、图片等资料拖到这里（支持多选批量上传），或点击右侧按钮
                     </p>
                   </div>
                 </div>
                 <label className="shrink-0 cursor-pointer">
                   <span className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                    {uploadMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                    {uploadProgress ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {uploadProgress.done + 1}/{uploadProgress.total}
+                      </>
                     ) : (
                       <Plus className="h-4 w-4" />
                     )}
-                    添加资料
+                    {uploadProgress ? "上传中" : "添加资料"}
                   </span>
                   <input
                     type="file"
+                    multiple
                     accept=".pdf,.txt,.md,.markdown,.docx,.epub,.png,.jpg,.jpeg,.webp,.bmp,.tif,.tiff"
                     className="sr-only"
                     onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (file) uploadFile(file);
+                      const files = Array.from(event.target.files ?? []);
+                      if (files.length > 0) void uploadFiles(files);
                       event.target.value = "";
                     }}
                   />
                 </label>
               </div>
 
-              {uploadMutation.error ? (
-                <p className="mt-3 text-sm text-red-600">{uploadMutation.error.message}</p>
+              {uploadProgress ? (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  正在上传 {uploadProgress.name}（{uploadProgress.done + 1}/{uploadProgress.total}），解析与索引会在后台自动进行
+                </p>
+              ) : null}
+              {uploadErrors.length > 0 ? (
+                <div className="mt-3 space-y-1">
+                  {uploadErrors.map((message) => (
+                    <p key={message} className="text-sm text-red-600">
+                      {message}
+                    </p>
+                  ))}
+                </div>
               ) : null}
               {documentsQuery.error ? (
                 <p className="mt-3 text-sm text-red-600">{documentsQuery.error.message}</p>
