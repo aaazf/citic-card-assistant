@@ -13,7 +13,9 @@ WORKDIR /app
 ENV PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/ \
     HF_ENDPOINT=https://hf-mirror.com
 COPY backend/requirements.txt backend/requirements.txt
-RUN pip install --no-cache-dir -r backend/requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt \
+    && pip uninstall -y opencv-python \
+    && pip install --no-cache-dir "opencv-python-headless>=4.8"
 COPY backend/ backend/
 COPY --from=frontend /app/frontend/dist frontend/dist
 EXPOSE 7860
